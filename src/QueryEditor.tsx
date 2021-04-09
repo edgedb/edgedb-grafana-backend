@@ -11,38 +11,44 @@ const { FormField } = LegacyForms;
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export class QueryEditor extends PureComponent<Props> {
-  onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onQueryTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const { onChange, query } = this.props;
     onChange({ ...query, queryText: event.target.value });
   };
 
-  onConstantChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, constant: parseFloat(event.target.value) });
-    // executes the query
-    onRunQuery();
+  onValueTypeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onChange, query } = this.props;
+    onChange({ ...query, valueType: event.target.value });
   };
 
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const { queryText, constant } = query;
+    const { queryText, valueType } = query;
 
     return (
       <div className="gf-form">
         <FormField
-          width={4}
-          value={constant}
-          onChange={this.onConstantChange}
-          label="Constant"
-          type="number"
-          step="0.1"
+          width={8}
+          value={valueType}
+          onChange={this.onValueTypeChange}
+          label="Value type"
+          tooltip="an EdgeDB scalar type"
+          type="string"
         />
         <FormField
           labelWidth={8}
-          value={queryText || ''}
-          onChange={this.onQueryTextChange}
           label="Query Text"
-          tooltip="Not used yet"
+          tooltip="EdgeQL"
+          type="string"
+          inputEl={
+            <textarea
+              className="gf-form-input"
+              cols={125}
+              rows={12}
+              value={queryText || ''}
+              onChange={this.onQueryTextChange}
+            />
+          }
         />
       </div>
     );
