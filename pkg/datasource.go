@@ -16,8 +16,6 @@ import (
 
 // newDatasource returns datasource.ServeOpts.
 func newDatasource() datasource.ServeOpts {
-	log.DefaultLogger.Info("------------------- newDataSource --------------------")
-
 	// creates a instance manager for your plugin. The function passed
 	// into `NewInstanceManger` is called when the instance is created
 	// for the first time or when a datasource configuration changed.
@@ -45,9 +43,6 @@ type SampleDatasource struct {
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 func (td *SampleDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	log.DefaultLogger.Info("------------------- query --------------------")
-	log.DefaultLogger.Info("QueryData", "request", req)
-
 	instance, err := td.im.Get(req.PluginContext)
 	if err != nil {
 		log.DefaultLogger.Error(fmt.Sprintf("------------------- im.Get failed: %q --------------------", err.Error()))
@@ -90,8 +85,6 @@ type QueryResult struct {
 }
 
 func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query backend.DataQuery) backend.DataResponse {
-	log.DefaultLogger.Info("------------------- query() ----------------")
-
 	// Unmarshal the json into our queryModel
 	var qm queryModel
 	response := backend.DataResponse{}
@@ -100,14 +93,11 @@ func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query b
 		log.DefaultLogger.Error(fmt.Sprintf("------------------ json decode query failed: %q ------------", response.Error.Error()))
 		return response
 	}
-	log.DefaultLogger.Info(qm.QueryText)
 
 	// Log a warning if `Format` is empty.
 	if qm.Format == "" {
 		log.DefaultLogger.Warn("format is empty. defaulting to time series")
 	}
-
-	log.DefaultLogger.Info(fmt.Sprintf("------------------ from: %v, to: %v, mdp: %v ------------", query.TimeRange.From, query.TimeRange.To, query.MaxDataPoints))
 
 	args := map[string]interface{}{
 		"from":            query.TimeRange.From,
@@ -122,34 +112,24 @@ func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query b
 		return response
 	}
 
-	log.DefaultLogger.Info(fmt.Sprintf("------------------ query results: %v ------------", len(results)))
-
 	times := make([]time.Time, len(results))
 	values := make([]float64, len(results))
 
 	for i, row := range results {
 		times[i] = row.Time
 		values[i] = float64(row.Value)
-		log.DefaultLogger.Info(fmt.Sprintf("%v, %v", row.Time, row.Value))
 	}
 
 	// create data frame response
-	log.DefaultLogger.Info("------------------- check ----------------")
 	frame := data.NewFrame("response")
-	log.DefaultLogger.Info("------------------- check ----------------")
 	frame.Fields = append(frame.Fields, data.NewField("time", nil, times))
-	log.DefaultLogger.Info("------------------- check ----------------")
 	frame.Fields = append(frame.Fields, data.NewField("values", nil, values))
-	log.DefaultLogger.Info("------------------- check ----------------")
 	response.Frames = append(response.Frames, frame)
 
-	log.DefaultLogger.Info(fmt.Sprintf("------------------- response: %#v ----------------", response.Frames[0]))
-	log.DefaultLogger.Info("------------------- query() done ----------------")
 	return response
 }
 
 func getURI(s *backend.DataSourceInstanceSettings) (string, error) {
-	log.DefaultLogger.Info("------------------- getURI --------------------")
 
 	var settings struct {
 		URI string `json:"uri"`
@@ -157,7 +137,6 @@ func getURI(s *backend.DataSourceInstanceSettings) (string, error) {
 
 	err := json.Unmarshal(s.JSONData, &settings)
 	if err != nil {
-		log.DefaultLogger.Error(fmt.Sprintf("---------- json decode uri failed: %q ----------", err.Error()))
 		return "", err
 	}
 
@@ -169,7 +148,6 @@ func getURI(s *backend.DataSourceInstanceSettings) (string, error) {
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (td *SampleDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	log.DefaultLogger.Info("------------------- CheckHealth --------------------")
 	var (
 		pool   edgedb.Pool
 		result int64
@@ -213,8 +191,6 @@ type PoolWrapper struct {
 }
 
 func newDataSourceInstance(setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	log.DefaultLogger.Info(fmt.Sprintf("---------------- newDataSourceInstance: %#v", setting))
-
 	uri, err := getURI(&setting)
 	if err != nil {
 		return nil, err
