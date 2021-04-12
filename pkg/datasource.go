@@ -75,13 +75,15 @@ func (td *SampleDatasource) QueryData(ctx context.Context, req *backend.QueryDat
 type queryModel struct {
 	Format        string `json:"format"`
 	QueryText     string `json:"queryText"`
+	IntervalMS    int64  `json:"intervalMs"`
 	MaxDataPoints int64  `json:"maxDataPoints"`
 }
 
 type QueryResult struct {
 	ID    edgedb.UUID `edgedb:"id"`
 	Time  time.Time   `edgedb:"time"`
-	Value int64       `edgedb:"value"`
+	Value float64     `edgedb:"value"`
+	Label string      `edgedb:"label"`
 }
 
 func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query backend.DataQuery) backend.DataResponse {
@@ -102,6 +104,7 @@ func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query b
 	args := map[string]interface{}{
 		"from":            query.TimeRange.From,
 		"to":              query.TimeRange.To,
+		"interval_ms":     qm.IntervalMS,
 		"max_data_points": query.MaxDataPoints,
 	}
 
@@ -114,10 +117,12 @@ func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query b
 
 	times := make([]time.Time, len(results))
 	values := make([]float64, len(results))
+	labels := make([]string, len(results))
 
 	for i, row := range results {
 		times[i] = row.Time
-		values[i] = float64(row.Value)
+		values[i] = row.Value
+		labels[i] = row.Label
 	}
 
 	// create data frame response
