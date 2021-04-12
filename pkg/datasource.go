@@ -135,7 +135,6 @@ func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query b
 }
 
 func getURI(s *backend.DataSourceInstanceSettings) (string, error) {
-
 	var settings struct {
 		URI string `json:"uri"`
 	}
