@@ -16,25 +16,12 @@ export class QueryEditor extends PureComponent<Props> {
     onChange({ ...query, queryText: event.target.value });
   };
 
-  onValueTypeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onChange, query } = this.props;
-    onChange({ ...query, valueType: event.target.value });
-  };
-
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const { queryText, valueType } = query;
+    const { queryText } = query;
 
     return (
       <div className="gf-form">
-        <FormField
-          width={8}
-          value={valueType}
-          onChange={this.onValueTypeChange}
-          label="Value type"
-          tooltip="an EdgeDB scalar type"
-          type="string"
-        />
         <FormField
           labelWidth={8}
           label="Query Text"

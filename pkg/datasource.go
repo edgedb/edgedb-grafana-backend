@@ -126,10 +126,18 @@ func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query b
 	}
 
 	// create data frame response
-	frame := data.NewFrame("response")
-	frame.Fields = append(frame.Fields, data.NewField("time", nil, times))
-	frame.Fields = append(frame.Fields, data.NewField("values", nil, values))
-	response.Frames = append(response.Frames, frame)
+	long := data.NewFrame("response")
+	long.Fields = append(long.Fields, data.NewField("time", nil, times))
+	long.Fields = append(long.Fields, data.NewField("value", nil, values))
+	long.Fields = append(long.Fields, data.NewField("label", nil, labels))
+
+	wide, err := data.LongToWide(long, &data.FillMissing{Mode: data.FillModeNull})
+	if err != nil {
+		response.Error = err
+		response.Frames = append(response.Frames, long)
+	} else {
+		response.Frames = append(response.Frames, wide)
+	}
 
 	return response
 }
