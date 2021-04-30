@@ -1,10 +1,10 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
-export interface MyQuery extends DataQuery {
+export interface Query extends DataQuery {
   queryText?: string;
 }
 
-export const defaultQuery: Partial<MyQuery> = {
+export const defaultQuery: Partial<Query> = {
   queryText: `WITH 
     # query arguments provided by grafana
     from := <datetime>$from,
@@ -40,6 +40,12 @@ LIMIT max_data_points;
 /**
  * These are options configured for each DataSource instance
  */
-export interface MyDataSourceOptions extends DataSourceJsonData {
-  uri?: string;
+export interface JsonData extends DataSourceJsonData {
+  host?: string;
+  port?: number;
+  user?: string;
+}
+
+export interface SecureJsonData {
+  password?: string;
 }

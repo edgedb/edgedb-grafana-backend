@@ -1,7 +1,7 @@
 {
-  "name": "edgedb-my-plugin",
+  "name": "edgedb",
   "version": "1.0.0",
-  "description": "this is a test...",
+  "description": "EdgeDB plugin for Grafana",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
     "test": "grafana-toolkit plugin:test",

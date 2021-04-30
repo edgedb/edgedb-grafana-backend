@@ -142,17 +142,31 @@ func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query b
 	return response
 }
 
-func getURI(s *backend.DataSourceInstanceSettings) (string, error) {
+func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 	var settings struct {
-		URI string `json:"uri"`
+		Host string `json:"host"`
+		Port int    `json:"port"`
+		User string `json:"user"`
 	}
+
+	log.DefaultLogger.Error(fmt.Sprintf("----------- jsondata: %q -----------", string(s.JSONData)))
 
 	err := json.Unmarshal(s.JSONData, &settings)
 	if err != nil {
-		return "", err
+		return edgedb.Options{}, err
 	}
 
-	return settings.URI, nil
+	opts := edgedb.Options{
+		Hosts:    []string{settings.Host},
+		Ports:    []int{settings.Port},
+		User:     settings.User,
+		Password: s.DecryptedSecureJSONData["password"],
+		MaxConns: 1,
+		MinConns: 1,
+	}
+	log.DefaultLogger.Error(fmt.Sprintf("----------- options: %#v -----------", opts))
+
+	return opts, nil
 }
 
 // CheckHealth handles health checks sent from Grafana to the plugin.
@@ -165,12 +179,12 @@ func (td *SampleDatasource) CheckHealth(ctx context.Context, req *backend.CheckH
 		result int64
 	)
 
-	uri, err := getURI(req.PluginContext.DataSourceInstanceSettings)
+	opts, err := getOptions(req.PluginContext.DataSourceInstanceSettings)
 	if err != nil {
 		goto Error
 	}
 
-	pool, err = edgedb.ConnectDSN(ctx, uri, edgedb.Options{MaxConns: 1, MinConns: 1})
+	pool, err = edgedb.Connect(ctx, opts)
 	if err != nil {
 		goto Error
 	}
@@ -203,13 +217,13 @@ type PoolWrapper struct {
 }
 
 func newDataSourceInstance(setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	uri, err := getURI(&setting)
+	opts, err := getOptions(&setting)
 	if err != nil {
 		return nil, err
 	}
 
 	ctx := context.Background()
-	pool, err := edgedb.ConnectDSN(ctx, uri, edgedb.Options{MaxConns: 1, MinConns: 1})
+	pool, err := edgedb.Connect(ctx, opts)
 	if err != nil {
 		log.DefaultLogger.Error(fmt.Sprintf("----------- could not connect: %q -----------", err.Error()))
 		return nil, err

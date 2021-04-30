@@ -1,35 +1,21 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "my-plugin",
-  "id": "edgedb-my-plugin",
+  "name": "EdgeDB",
+  "id": "edgedb",
   "metrics": true,
   "backend": true,
-  "executable": "gpx_my-plugin",
+  "executable": "gpx_edgedb",
   "info": {
-    "description": "this is a test...",
+    "description": "EdgeDB plugin",
     "author": {
       "name": "fmoor",
       "url": "edgedb.com"
     },
-    "keywords": [],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
-    },
-    "links": [
-      {
-        "name": "Website",
-        "url": "https://github.com/grafana/grafana-starter-datasource-backend"
-      },
-      {
-        "name": "License",
-        "url": "https://github.com/grafana/grafana-starter-datasource-backend/blob/master/LICENSE"
-      }
-    ],
-    "screenshots": [],
-    "version": "%VERSION%",
-    "updated": "%TODAY%"
+    }
   },
   "dependencies": {
     "grafanaDependency": ">=7.0.0",

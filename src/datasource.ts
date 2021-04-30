@@ -1,9 +1,9 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import { MyDataSourceOptions, MyQuery } from './types';
+import { JsonData, Query } from './types';
 
-export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
-  constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
+export class DataSource extends DataSourceWithBackend<Query, JsonData> {
+  constructor(instanceSettings: DataSourceInstanceSettings<JsonData>) {
     super(instanceSettings);
   }
 }
