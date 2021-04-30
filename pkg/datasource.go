@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/edgedb/edgedb-go"
@@ -145,7 +146,7 @@ func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query b
 func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 	var settings struct {
 		Host string `json:"host"`
-		Port int    `json:"port"`
+		Port string `json:"port"`
 		User string `json:"user"`
 	}
 
@@ -156,9 +157,14 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 		return edgedb.Options{}, err
 	}
 
+	port, err := strconv.Atoi(settings.Port)
+	if err != nil {
+		return edgedb.Options{}, err
+	}
+
 	opts := edgedb.Options{
 		Hosts:    []string{settings.Host},
-		Ports:    []int{settings.Port},
+		Ports:    []int{port},
 		User:     settings.User,
 		Password: s.DecryptedSecureJSONData["password"],
 		MaxConns: 1,

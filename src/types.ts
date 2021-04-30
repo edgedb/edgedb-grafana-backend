@@ -42,7 +42,7 @@ LIMIT max_data_points;
  */
 export interface JsonData extends DataSourceJsonData {
   host?: string;
-  port?: number;
+  port?: string;
   user?: string;
 }
 

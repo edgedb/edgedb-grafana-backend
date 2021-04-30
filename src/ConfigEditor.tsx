@@ -18,7 +18,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   onPortChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props;
-    const jsonData = { ...options.jsonData, port: +event.target.value };
+    const jsonData = { ...options.jsonData, port: event.target.value };
     onOptionsChange({ ...options, jsonData });
   };
 
