@@ -39,12 +39,8 @@ type SampleDatasource struct {
 	im instancemgmt.InstanceManager
 }
 
-// QueryData handles multiple queries and returns multiple responses.
-// req contains the queries []DataQuery (where each query contains RefID as a unique identifer).
-// The QueryDataResponse contains a map of RefID to the response for each query, and each response
-// contains Frames ([]*Frame).
-func (td *SampleDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	instance, err := td.im.Get(req.PluginContext)
+func (td *SampleDatasource) getPool(pluginContext backend.PluginContext) (*edgedb.Pool, error) {
+	instance, err := td.im.Get(pluginContext)
 	if err != nil {
 		log.DefaultLogger.Error(fmt.Sprintf("------------------- im.Get failed: %q --------------------", err.Error()))
 		return nil, err
@@ -56,7 +52,19 @@ func (td *SampleDatasource) QueryData(ctx context.Context, req *backend.QueryDat
 		return nil, fmt.Errorf("*PoolWrapper type cast failed")
 	}
 
-	pool := settings.pool
+	return settings.pool, nil
+}
+
+// QueryData handles multiple queries and returns multiple responses.
+// req contains the queries []DataQuery (where each query contains RefID as a unique identifer).
+// The QueryDataResponse contains a map of RefID to the response for each query, and each response
+// contains Frames ([]*Frame).
+func (td *SampleDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	pool, err := td.getPool(req.PluginContext)
+	if err != nil {
+		log.DefaultLogger.Error(fmt.Sprintf("------------------- could not get pool: %q --------------------", err.Error()))
+		return nil, err
+	}
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -87,7 +95,7 @@ type QueryResult struct {
 	Label string      `edgedb:"label"`
 }
 
-func (td *SampleDatasource) query(ctx context.Context, pool edgedb.Pool, query backend.DataQuery) backend.DataResponse {
+func (td *SampleDatasource) query(ctx context.Context, pool *edgedb.Pool, query backend.DataQuery) backend.DataResponse {
 	// Unmarshal the json into our queryModel
 	var qm queryModel
 	response := backend.DataResponse{}
@@ -150,8 +158,6 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 		User string `json:"user"`
 	}
 
-	log.DefaultLogger.Error(fmt.Sprintf("----------- jsondata: %q -----------", string(s.JSONData)))
-
 	err := json.Unmarshal(s.JSONData, &settings)
 	if err != nil {
 		return edgedb.Options{}, err
@@ -170,7 +176,8 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 		MaxConns: 1,
 		MinConns: 1,
 	}
-	log.DefaultLogger.Error(fmt.Sprintf("----------- options: %#v -----------", opts))
+
+	log.DefaultLogger.Debug(fmt.Sprintf("----------- connecting to edgedb server using: %#v -----------", opts))
 
 	return opts, nil
 }
@@ -180,27 +187,14 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (td *SampleDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	var (
-		pool   edgedb.Pool
-		result int64
-	)
+	var result int64
 
-	opts, err := getOptions(req.PluginContext.DataSourceInstanceSettings)
-	if err != nil {
-		goto Error
-	}
-
-	pool, err = edgedb.Connect(ctx, opts)
+	pool, err := td.getPool(req.PluginContext)
 	if err != nil {
 		goto Error
 	}
 
 	err = pool.QueryOne(ctx, "SELECT 1", &result)
-	if err != nil {
-		goto Error
-	}
-
-	err = pool.Close()
 	if err != nil {
 		goto Error
 	}
@@ -219,12 +213,13 @@ Error:
 }
 
 type PoolWrapper struct {
-	pool edgedb.Pool
+	pool *edgedb.Pool
 }
 
 func newDataSourceInstance(setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	opts, err := getOptions(&setting)
 	if err != nil {
+		log.DefaultLogger.Error(fmt.Sprintf("----------- could not get options: %q -----------", err.Error()))
 		return nil, err
 	}
 
