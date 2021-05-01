@@ -44,6 +44,7 @@ export interface JsonData extends DataSourceJsonData {
   host?: string;
   port?: string;
   user?: string;
+  database?: string;
 }
 
 export interface SecureJsonData {

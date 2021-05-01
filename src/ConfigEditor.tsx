@@ -28,6 +28,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
     onOptionsChange({ ...options, jsonData });
   };
 
+  onDatabaseChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onOptionsChange, options } = this.props;
+    const jsonData = { ...options.jsonData, database: event.target.value };
+    onOptionsChange({ ...options, jsonData });
+  };
+
   onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props;
     const secureJsonData = { ...options.secureJsonData, password: event.target.value };
@@ -68,6 +74,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
             onChange={this.onPortChange}
             value={jsonData.port || ''}
             placeholder="EdgeDB Port"
+          />
+
+          <FormField
+            label="Database"
+            labelWidth={6}
+            inputWidth={20}
+            onChange={this.onPortChange}
+            value={jsonData.database || ''}
+            placeholder="EdgeDB Database"
           />
 
           <FormField

@@ -153,9 +153,10 @@ func (td *SampleDatasource) query(ctx context.Context, pool *edgedb.Pool, query 
 
 func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 	var settings struct {
-		Host string `json:"host"`
-		Port string `json:"port"`
-		User string `json:"user"`
+		Host     string `json:"host"`
+		Port     string `json:"port"`
+		User     string `json:"user"`
+		Database string `json:"database"`
 	}
 
 	err := json.Unmarshal(s.JSONData, &settings)
@@ -171,6 +172,7 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 	opts := edgedb.Options{
 		Hosts:    []string{settings.Host},
 		Ports:    []int{port},
+		Database: settings.Database,
 		User:     settings.User,
 		Password: s.DecryptedSecureJSONData["password"],
 		MaxConns: 1,
