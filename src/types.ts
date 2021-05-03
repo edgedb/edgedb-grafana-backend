@@ -12,6 +12,9 @@ export const defaultQuery: Partial<Query> = {
     max_data_points := <int64>$max_data_points,
     # interval_ms := <int64>$interval_ms,
 
+    # dasboard variables are always strings
+    # my_dashboard_variable := <str>$my_dashboard_variable
+
 # the query shape must be { 
 #   value <float64>, 
 #   time <datetime>, 

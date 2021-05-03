@@ -82,10 +82,10 @@ func (td *SampleDatasource) QueryData(ctx context.Context, req *backend.QueryDat
 }
 
 type queryModel struct {
-	Format        string `json:"format"`
-	QueryText     string `json:"queryText"`
-	IntervalMS    int64  `json:"intervalMs"`
-	MaxDataPoints int64  `json:"maxDataPoints"`
+	QueryText     string                 `json:"queryText"`
+	IntervalMS    int64                  `json:"intervalMs"`
+	MaxDataPoints int64                  `json:"maxDataPoints"`
+	Args          map[string]interface{} `json:"args"`
 }
 
 type QueryResult struct {
@@ -105,17 +105,12 @@ func (td *SampleDatasource) query(ctx context.Context, pool *edgedb.Pool, query 
 		return response
 	}
 
-	// Log a warning if `Format` is empty.
-	if qm.Format == "" {
-		log.DefaultLogger.Warn("format is empty. defaulting to time series")
-	}
-
-	args := map[string]interface{}{
-		"from":            query.TimeRange.From,
-		"to":              query.TimeRange.To,
-		"interval_ms":     qm.IntervalMS,
-		"max_data_points": query.MaxDataPoints,
-	}
+	args := qm.Args
+	args["from"] = query.TimeRange.From
+	args["to"] = query.TimeRange.To
+	args["interval_ms"] = qm.IntervalMS
+	args["max_data_points"] = query.MaxDataPoints
+	log.DefaultLogger.Info(fmt.Sprintf("------------------ args: %#v ------------", args))
 
 	var results []QueryResult
 	response.Error = pool.Query(ctx, qm.QueryText, &results, args)
