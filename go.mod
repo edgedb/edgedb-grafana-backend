@@ -1,12 +1,8 @@
 module github.com/grafana/grafana-starter-datasource-backend
 
-go 1.15
+go 1.16
 
 require (
-	github.com/edgedb/edgedb-go v0.5.2-0.20210413222849-b2980deab6b1
-	github.com/grafana/grafana-plugin-sdk-go v0.89.0
-	github.com/xdg/scram v1.0.3 // indirect
-	github.com/xdg/stringprep v1.0.3 // indirect
-	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
-	golang.org/x/text v0.3.6 // indirect
+	github.com/edgedb/edgedb-go v0.9.1-0.20211213210033-78161aad30ca
+	github.com/grafana/grafana-plugin-sdk-go v0.102.0
 )
