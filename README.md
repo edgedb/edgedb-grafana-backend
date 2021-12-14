@@ -1,16 +1,28 @@
-# Grafana Data Source Backend Plugin Template
+# Grafana Data Source Backend Plugin for EdgeDB
 
-[![Build](https://github.com/grafana/grafana-starter-datasource-backend/workflows/CI/badge.svg)](https://github.com/grafana/grafana-datasource-backend/actions?query=workflow%3A%22CI%22)
+This plugin is currently in Alpha and is not ready for production use.
 
-This template is a starting point for building Grafana Data Source Backend Plugins
+## What is Grafana Data Source Backend Plugin for EdgeDB?
 
-## What is Grafana Data Source Backend Plugin?
+This plugin allows connecting any EdgeDB server instance to Grafana and
+visualize arbitrary EdgeQL queries.
 
-Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. There’s a good chance you can already visualize metrics from the systems you have set up. In some cases, though, you already have an in-house metrics solution that you’d like to add to your Grafana dashboards. Grafana Data Source Plugins enables integrating such solutions with Grafana.
+For more information about backend plugins, refer to the documentation on [Grafana backend plugins](https://grafana.com/docs/grafana/latest/developers/plugins/backend/).
 
-For more information about backend plugins, refer to the documentation on [Backend plugins](https://grafana.com/docs/grafana/latest/developers/plugins/backend/).
+## Installation
 
-## Getting started
+Use Grafana 8.0 or higher is required for this plugin.  To install, follow
+instruction below to build the plugin and then copy the resulting `dist/`
+directory as `$GF_PATHS_PLUGINS/edgedb`.
+
+This plugin is not signed yet, and Grafana will refuse to load it, unless
+explicitly configured to do so via
+the `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=edgedb` environment variable,
+or `allow_loading_unsigned_plugins = edgedb` in the `[plugins]` section in
+`grafana.ini`.
+
+
+## Building from source
 
 A data source backend plugin consists of both frontend and backend components.
 
@@ -46,6 +58,7 @@ A data source backend plugin consists of both frontend and backend components.
 
    ```bash
    go get -u github.com/grafana/grafana-plugin-sdk-go
+   go mod tidy
    ```
 
 2. Build backend plugin binaries for Linux, Windows and Darwin:
@@ -59,11 +72,3 @@ A data source backend plugin consists of both frontend and backend components.
    ```bash
    mage -l
    ```
-
-## Learn more
-
-- [Build a data source backend plugin tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin)
-- [Grafana documentation](https://grafana.com/docs/)
-- [Grafana Tutorials](https://grafana.com/tutorials/) - Grafana Tutorials are step-by-step guides that help you make the most of Grafana
-- [Grafana UI Library](https://developers.grafana.com/ui) - UI components to help you build interfaces using Grafana Design System
-- [Grafana plugin SDK for Go](https://grafana.com/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/)
