@@ -33,6 +33,7 @@ var (
 
 // NewEdgeDBDatasource creates a new datasource instance.
 func NewEdgeDBDatasource(
+	ctx context.Context,
 	settings backend.DataSourceInstanceSettings,
 ) (instancemgmt.Instance, error) {
 	opts, err := getOptions(&settings)
@@ -44,7 +45,6 @@ func NewEdgeDBDatasource(
 
 	log.DefaultLogger.Debug(
 		fmt.Sprintf("connecting to edgedb server using: %#v", opts))
-	ctx := context.Background()
 	client, err := edgedb.CreateClient(ctx, opts)
 	if err != nil {
 		log.DefaultLogger.Error(
@@ -106,10 +106,10 @@ type queryModel struct {
 }
 
 type QueryResult struct {
-	ID    edgedb.UUID `edgedb:"id"`
-	Time  time.Time   `edgedb:"time"`
-	Value float64     `edgedb:"value"`
-	Label string      `edgedb:"label"`
+	ID    edgedb.UUID        `edgedb:"id"`
+	Time  time.Time          `edgedb:"time"`
+	Value float64            `edgedb:"value"`
+	Label edgedb.OptionalStr `edgedb:"label"`
 }
 
 func (d *EdgeDBDatasource) query(
@@ -156,7 +156,9 @@ func (d *EdgeDBDatasource) query(
 	for i, row := range results {
 		times[i] = row.Time
 		values[i] = row.Value
-		labels[i] = row.Label
+		if label, ok := row.Label.Get(); ok {
+			labels[i] = label
+		}
 	}
 
 	// create data frame response
