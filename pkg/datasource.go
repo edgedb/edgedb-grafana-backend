@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -37,12 +38,12 @@ func NewEdgeDBDatasource(
 	ctx context.Context,
 	settings backend.DataSourceInstanceSettings,
 ) (instancemgmt.Instance, error) {
-	deployment, err := getDeployment(&settings)
+	deploymentType, err := getDeploymentType(&settings)
 	if err != nil {
 		return nil, err
 	}
 	var client *edgedb.Client
-	switch deployment {
+	switch deploymentType {
 	case "edgedb-cloud":
 		cloudOptions, err := getCloudOptions(&settings)
 		if err != nil {
@@ -63,7 +64,7 @@ func NewEdgeDBDatasource(
 			log.DefaultLogger.Error(msg)
 			return nil, err
 		}
-	default:
+	case "plugin":
 		// non-cloud is default
 		opts, err := getOptions(&settings)
 		if err != nil {
@@ -80,6 +81,10 @@ func NewEdgeDBDatasource(
 				fmt.Sprintf("could not connect: %q", err.Error()))
 			return nil, err
 		}
+	default:
+		msg := fmt.Sprintf("unknown deployment type: %s", deploymentType)
+		log.DefaultLogger.Error(msg)
+		return nil, errors.New(msg)
 	}
 	return &EdgeDBDatasource{client}, nil
 }
@@ -235,22 +240,23 @@ Error:
 	}, nil
 }
 
-func getDeployment(s *backend.DataSourceInstanceSettings) (string, error) {
-	var deployment struct {
-		Deployment string `json:deployment`
+func getDeploymentType(s *backend.DataSourceInstanceSettings) (string, error) {
+	var dataSource struct {
+		DeploymentType string `json:deployment`
 	}
 
-	err := json.Unmarshal(s.JSONData, &deployment)
+	err := json.Unmarshal(s.JSONData, &dataSource)
 	if err != nil {
 		return "", nil
 	}
-	return deployment.Deployment, nil
+	if dataSource.DeploymentType == "" {
+		dataSource.DeploymentType = "plugin"
+	}
+	return dataSource.DeploymentType, nil
 }
 
 func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 	var settings struct {
-		CloudInstance string `json:cloud.instance`
-		CloudSecret string `json:cloud.secret`
 		Host        string `json:"host"`
 		Port        string `json:"port"`
 		User        string `json:"user"`
@@ -293,8 +299,10 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 
 func getCloudOptions(s *backend.DataSourceInstanceSettings) (map[string]string, error) {
 	var settings struct {
-		Instance    string `json:cloud.instance`
-		SecretKey   string `json:cloud.secret`
+		Cloud struct {
+			Instance    string `json:instance`
+			SecretKey   string `json:secret`
+		}
 		Database    string `json:"database"`
 		TlsCA       string `json:"tlsCA"`
 		TlsSecurity string `json:"tlsSecurity"`
@@ -308,8 +316,8 @@ func getCloudOptions(s *backend.DataSourceInstanceSettings) (map[string]string, 
 	// for cloud, these two are required
 	// no need to validate here ..
 	// the edgedb-go client will validate and fail if not
-	cloudOptions["EDGEDB_INSTANCE"] = settings.Instance
-	cloudOptions["EDGEDB_SECRET_KEY"] = settings.SecretKey
+	cloudOptions["EDGEDB_INSTANCE"] = settings.Cloud.Instance
+	cloudOptions["EDGEDB_SECRET_KEY"] = settings.Cloud.SecretKey
 
 	if settings.TlsSecurity == "" {
 		settings.TlsSecurity = "strict"
