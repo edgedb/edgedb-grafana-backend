@@ -52,19 +52,22 @@ func NewEdgeDBDatasource(
 			return nil, err
 		}
 
-		msg := fmt.Sprintf("connecting to edgedb server using: %#v", cloudOptions)
+		msg := fmt.Sprintf("connecting to edgedb cloud instance using: %#v",
+			cloudOptions)
 		log.DefaultLogger.Debug(msg)
-		// client expects all struct fields OR all env
+		// do not mix config and env
+		// edge cloud client expects ALL config struct values -or- ALL env vars
 		for key, value := range cloudOptions {
 			os.Setenv(key, value)
 		}
 		client, err = edgedb.CreateClient(ctx, edgedb.Options{})
 		if err != nil {
-			msg := fmt.Sprintf("could not connect to cloud: %q", err.Error())
+			msg := fmt.Sprintf("could not connect to edgedb cloud instance: %q",
+				err.Error())
 			log.DefaultLogger.Error(msg)
 			return nil, err
 		}
-	case "plugin":
+	case "generic":
 		// non-cloud is default
 		opts, err := getOptions(&settings)
 		if err != nil {
@@ -250,7 +253,7 @@ func getDeploymentType(s *backend.DataSourceInstanceSettings) (string, error) {
 		return "", nil
 	}
 	if dataSource.DeploymentType == "" {
-		dataSource.DeploymentType = "plugin"
+		dataSource.DeploymentType = "generic"
 	}
 	return dataSource.DeploymentType, nil
 }
