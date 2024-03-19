@@ -46,7 +46,7 @@ func NewEdgeDBDatasource(
 	log.DefaultLogger.Debug(
 		fmt.Sprintf("connecting to edgedb server using: %#v", opts))
 	var client *edgedb.Client
-	if cloudInstance =="" {
+	if cloudInstance == "" {
 		// non cloud
 		client, err = edgedb.CreateClient(ctx, opts)
 	} else {
