@@ -299,10 +299,7 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 
 func getCloudOptions(s *backend.DataSourceInstanceSettings) (map[string]string, error) {
 	var settings struct {
-		Cloud struct {
-			Instance    string `json:instance`
-			SecretKey   string `json:secret`
-		}
+		Instance    string `json:"cloudInstance"`
 		Database    string `json:"database"`
 		TlsCA       string `json:"tlsCA"`
 		TlsSecurity string `json:"tlsSecurity"`
@@ -317,7 +314,7 @@ func getCloudOptions(s *backend.DataSourceInstanceSettings) (map[string]string, 
 	// no need to validate here ..
 	// the edgedb-go client will validate and fail if not
 	cloudOptions["EDGEDB_INSTANCE"] = settings.Cloud.Instance
-	cloudOptions["EDGEDB_SECRET_KEY"] = settings.Cloud.SecretKey
+	cloudOptions["EDGEDB_SECRET_KEY"] = s.DecryptedSecureJSONData["cloudSecret"]
 
 	if settings.TlsSecurity == "" {
 		settings.TlsSecurity = "strict"
