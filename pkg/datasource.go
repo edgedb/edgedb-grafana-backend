@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
@@ -38,57 +36,29 @@ func NewEdgeDBDatasource(
 	ctx context.Context,
 	settings backend.DataSourceInstanceSettings,
 ) (instancemgmt.Instance, error) {
-	deploymentType, err := getDeploymentType(&settings)
+	opts, cloudInstance, err := getOptions(&settings)
 	if err != nil {
+		log.DefaultLogger.Error(
+			fmt.Sprintf("could not get options: %q", err.Error()))
 		return nil, err
 	}
+
+	log.DefaultLogger.Debug(
+		fmt.Sprintf("connecting to edgedb server using: %#v", opts))
 	var client *edgedb.Client
-	switch deploymentType {
-	case "edgedb-cloud":
-		cloudOptions, err := getCloudOptions(&settings)
-		if err != nil {
-			msg := fmt.Sprintf("could not get cloud options: %q", err.Error())
-			log.DefaultLogger.Error(msg)
-			return nil, err
-		}
-
-		msg := fmt.Sprintf("connecting to edgedb cloud instance using: %#v",
-			cloudOptions)
-		log.DefaultLogger.Debug(msg)
-		// do not mix config and env
-		// edge cloud client expects ALL config struct values -or- ALL env vars
-		for key, value := range cloudOptions {
-			os.Setenv(key, value)
-		}
-		client, err = edgedb.CreateClient(ctx, edgedb.Options{})
-		if err != nil {
-			msg := fmt.Sprintf("could not connect to edgedb cloud instance: %q",
-				err.Error())
-			log.DefaultLogger.Error(msg)
-			return nil, err
-		}
-	case "generic":
-		// non-cloud is default
-		opts, err := getOptions(&settings)
-		if err != nil {
-			log.DefaultLogger.Error(
-				fmt.Sprintf("could not get options: %q", err.Error()))
-			return nil, err
-		}
-
-		log.DefaultLogger.Debug(
-			fmt.Sprintf("connecting to edgedb server using: %#v", opts))
+	if cloudInstance =="" {
+		// non cloud
 		client, err = edgedb.CreateClient(ctx, opts)
-		if err != nil {
-			log.DefaultLogger.Error(
-				fmt.Sprintf("could not connect: %q", err.Error()))
-			return nil, err
-		}
-	default:
-		msg := fmt.Sprintf("unknown deployment type: %s", deploymentType)
-		log.DefaultLogger.Error(msg)
-		return nil, errors.New(msg)
+	} else {
+		// for cloud, the DSN parser accepts an instance
+		client, err = edgedb.CreateClientDSN(ctx, cloudInstance, opts)
 	}
+	if err != nil {
+		log.DefaultLogger.Error(
+			fmt.Sprintf("could not connect: %q", err.Error()))
+		return nil, err
+	}
+
 	return &EdgeDBDatasource{client}, nil
 }
 
@@ -243,34 +213,20 @@ Error:
 	}, nil
 }
 
-func getDeploymentType(s *backend.DataSourceInstanceSettings) (string, error) {
-	var dataSource struct {
-		DeploymentType string `json:deployment`
-	}
-
-	err := json.Unmarshal(s.JSONData, &dataSource)
-	if err != nil {
-		return "", nil
-	}
-	if dataSource.DeploymentType == "" {
-		dataSource.DeploymentType = "generic"
-	}
-	return dataSource.DeploymentType, nil
-}
-
-func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
+func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, string, error) {
 	var settings struct {
 		Host        string `json:"host"`
 		Port        string `json:"port"`
 		User        string `json:"user"`
 		Database    string `json:"database"`
+		Instance    string `json:"cloudInstance"`
 		TlsCA       string `json:"tlsCA"`
 		TlsSecurity string `json:"tlsSecurity"`
 	}
 
 	err := json.Unmarshal(s.JSONData, &settings)
 	if err != nil {
-		return edgedb.Options{}, err
+		return edgedb.Options{}, "", err
 	}
 
 	var port int
@@ -279,13 +235,14 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 	} else {
 		port, err = strconv.Atoi(settings.Port)
 		if err != nil {
-			return edgedb.Options{}, err
+			return edgedb.Options{}, "", err
 		}
 	}
 
 	if settings.TlsSecurity == "" {
 		settings.TlsSecurity = "strict"
 	}
+
 	opts := edgedb.Options{
 		Host:     settings.Host,
 		Port:     port,
@@ -296,39 +253,8 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 			CA:           []byte(settings.TlsCA),
 			SecurityMode: edgedb.TLSSecurityMode(settings.TlsSecurity),
 		},
+		// below for edgedb cloud
+		SecretKey: s.DecryptedSecureJSONData["cloudSecret"],
 	}
-	return opts, nil
-}
-
-func getCloudOptions(s *backend.DataSourceInstanceSettings) (map[string]string, error) {
-	var settings struct {
-		CloudInstance string `json:"cloudInstance"`
-		Database      string `json:"database"`
-		TlsCA         string `json:"tlsCA"`
-		TlsSecurity   string `json:"tlsSecurity"`
-	}
-
-	cloudOptions := map[string]string{}
-	err := json.Unmarshal(s.JSONData, &settings)
-	if err != nil {
-		return cloudOptions, err
-	}
-	// for cloud, these two are required
-	// no need to validate here ..
-	// the edgedb-go client will validate and fail if not
-	cloudOptions["EDGEDB_INSTANCE"] = settings.CloudInstance
-	cloudOptions["EDGEDB_SECRET_KEY"] = s.DecryptedSecureJSONData["cloudSecret"]
-
-	if settings.TlsSecurity == "" {
-		settings.TlsSecurity = "strict"
-	}
-	cloudOptions["EDGEDB_CLIENT_TLS_SECURITY"] = settings.TlsSecurity
-
-	if settings.Database != "" {
-		cloudOptions["EDGEDB_DATABASE"] = settings.Database
-	}
-	if settings.TlsCA != "" {
-		cloudOptions["EDGEDB_TLS_CA"] = settings.TlsCA
-	}
-	return cloudOptions, nil
+	return opts, settings.Instance, nil
 }
