@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"errors"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
-	
+
 	"github.com/edgedb/edgedb-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -302,10 +302,10 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 
 func getCloudOptions(s *backend.DataSourceInstanceSettings) (map[string]string, error) {
 	var settings struct {
-		Instance    string `json:"cloudInstance"`
-		Database    string `json:"database"`
-		TlsCA       string `json:"tlsCA"`
-		TlsSecurity string `json:"tlsSecurity"`
+		CloudInstance string `json:"cloudInstance"`
+		Database      string `json:"database"`
+		TlsCA         string `json:"tlsCA"`
+		TlsSecurity   string `json:"tlsSecurity"`
 	}
 
 	cloudOptions := map[string]string{}
@@ -316,19 +316,19 @@ func getCloudOptions(s *backend.DataSourceInstanceSettings) (map[string]string, 
 	// for cloud, these two are required
 	// no need to validate here ..
 	// the edgedb-go client will validate and fail if not
-	cloudOptions["EDGEDB_INSTANCE"] = settings.Cloud.Instance
+	cloudOptions["EDGEDB_INSTANCE"] = settings.CloudInstance
 	cloudOptions["EDGEDB_SECRET_KEY"] = s.DecryptedSecureJSONData["cloudSecret"]
 
 	if settings.TlsSecurity == "" {
 		settings.TlsSecurity = "strict"
 	}
 	cloudOptions["EDGEDB_CLIENT_TLS_SECURITY"] = settings.TlsSecurity
-	
+
 	if settings.Database != "" {
 		cloudOptions["EDGEDB_DATABASE"] = settings.Database
 	}
 	if settings.TlsCA != "" {
 		cloudOptions["EDGEDB_TLS_CA"] = settings.TlsCA
 	}
-	return cloudOptions, nil 
+	return cloudOptions, nil
 }
