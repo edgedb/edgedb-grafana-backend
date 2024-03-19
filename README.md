@@ -132,6 +132,7 @@ datasources:
     isDefault: true
     editable: false
     jsonData:
+      deployment: edgedb-cloud
       cloudInstance: <my-edge-db-instance-name>
       database: <my-edgedb-schema-name>
       tlsSecurity: strict
