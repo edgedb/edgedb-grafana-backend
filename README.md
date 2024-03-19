@@ -136,7 +136,7 @@ datasources:
       database: <my-edgedb-schema-name>
       tlsSecurity: strict
     secureJsonData:
-      cloudSecret: <my-instance-cloud-secret>
+      secretKey: <my-instance-cloud-secret>
 ```
 
 

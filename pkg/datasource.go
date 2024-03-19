@@ -254,7 +254,7 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, string, 
 			SecurityMode: edgedb.TLSSecurityMode(settings.TlsSecurity),
 		},
 		// below for edgedb cloud
-		SecretKey: s.DecryptedSecureJSONData["cloudSecret"],
+		SecretKey: s.DecryptedSecureJSONData["secretKey"],
 	}
 	return opts, settings.Instance, nil
 }

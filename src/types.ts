@@ -56,5 +56,5 @@ export interface Options extends DataSourceJsonData {
 
 export interface SecureJsonData {
   password?: string;
-  cloudSecret?: string;
+  secretKey?: string;
 }
