@@ -140,7 +140,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             inputWidth={20}
             onChange={this.onHostChange}
             value={jsonData.host || ''}
-            placeholder="127.0.0.1"
+            placeholder=""
           />
 
           <FormField
@@ -150,7 +150,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             inputWidth={20}
             onChange={this.onPortChange}
             value={jsonData.port || ''}
-            placeholder="5656"
+            placeholder=""
           />
 
           <FormField
@@ -159,7 +159,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             inputWidth={20}
             onChange={this.onDatabaseChange}
             value={jsonData.database || ''}
-            placeholder="edgedb"
+            placeholder=""
           />
 
           <FormField
@@ -168,7 +168,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             inputWidth={20}
             onChange={this.onCloudInstanceChange}
             value={jsonData.cloudInstance || ''}
-            placeholder="org/name"
+            placeholder=""
           />
 
           <FormField
@@ -177,7 +177,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             inputWidth={20}
             onChange={this.onUserChange}
             value={jsonData.user || ''}
-            placeholder="edgedb"
+            placeholder=""
           />
 
           <SecretFormField
@@ -199,7 +199,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             }
             value={secureJsonData.secretKey || ''}
             label="Cloud Secret"
-            placeholder="<secret>"
+            placeholder=""
             labelWidth={6}
             inputWidth={20}
             onReset={this.onResetSecretKey}
