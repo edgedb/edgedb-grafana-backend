@@ -45,14 +45,9 @@ func NewEdgeDBDatasource(
 
 	log.DefaultLogger.Debug(
 		fmt.Sprintf("connecting to edgedb server using: %#v", opts))
-	var client *edgedb.Client
-	if cloudInstance == "" {
-		// non cloud
-		client, err = edgedb.CreateClient(ctx, opts)
-	} else {
-		// for cloud, the DSN parser accepts an instance
-		client, err = edgedb.CreateClientDSN(ctx, cloudInstance, opts)
-	}
+
+	// the client config options accepts a cloud instance as DSN if present
+	client, err := edgedb.CreateClientDSN(ctx, cloudInstance, opts)
 	if err != nil {
 		log.DefaultLogger.Error(
 			fmt.Sprintf("could not connect: %q", err.Error()))
