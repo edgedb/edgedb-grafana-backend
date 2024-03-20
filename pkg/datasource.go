@@ -36,16 +36,19 @@ func NewEdgeDBDatasource(
 	ctx context.Context,
 	settings backend.DataSourceInstanceSettings,
 ) (instancemgmt.Instance, error) {
-	opts, err := getOptions(&settings)
+	opts, cloudInstance, err := getOptions(&settings)
 	if err != nil {
 		log.DefaultLogger.Error(
 			fmt.Sprintf("could not get options: %q", err.Error()))
 		return nil, err
 	}
 
-	log.DefaultLogger.Debug(
-		fmt.Sprintf("connecting to edgedb server using: %#v", opts))
-	client, err := edgedb.CreateClient(ctx, opts)
+	msg :=fmt.Sprintf("connecting to edgedb server using: instance=\"%s\", %#v",
+		cloudInstance, opts)
+	log.DefaultLogger.Debug(msg)
+
+	// the client config options accepts a cloud instance as DSN if present
+	client, err := edgedb.CreateClientDSN(ctx, cloudInstance, opts)
 	if err != nil {
 		log.DefaultLogger.Error(
 			fmt.Sprintf("could not connect: %q", err.Error()))
@@ -206,28 +209,27 @@ Error:
 	}, nil
 }
 
-func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
+func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, string, error) {
 	var settings struct {
 		Host        string `json:"host"`
 		Port        string `json:"port"`
 		User        string `json:"user"`
 		Database    string `json:"database"`
+		Instance    string `json:"cloudInstance"`
 		TlsCA       string `json:"tlsCA"`
 		TlsSecurity string `json:"tlsSecurity"`
 	}
 
 	err := json.Unmarshal(s.JSONData, &settings)
 	if err != nil {
-		return edgedb.Options{}, err
+		return edgedb.Options{}, "", err
 	}
 
 	var port int
-	if settings.Port == "" {
-		port = 5656
-	} else {
+	if settings.Port != "" {
 		port, err = strconv.Atoi(settings.Port)
 		if err != nil {
-			return edgedb.Options{}, err
+			return edgedb.Options{}, "", err
 		}
 	}
 
@@ -245,7 +247,8 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, error) {
 			CA:           []byte(settings.TlsCA),
 			SecurityMode: edgedb.TLSSecurityMode(settings.TlsSecurity),
 		},
+		// below for edgedb cloud
+		SecretKey: s.DecryptedSecureJSONData["secretKey"],
 	}
-
-	return opts, nil
+	return opts, settings.Instance, nil
 }
