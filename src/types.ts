@@ -49,7 +49,7 @@ export interface Options extends DataSourceJsonData {
   port?: string;
   user?: string;
   database?: string;
-  instance?: string;
+  cloudInstance?: string;
   tlsCA?: string;
   tlsSecurity?: string;
 }
