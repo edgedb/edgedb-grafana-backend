@@ -43,8 +43,9 @@ func NewEdgeDBDatasource(
 		return nil, err
 	}
 
-	log.DefaultLogger.Debug(
-		fmt.Sprintf("connecting to edgedb server using: %#v", opts))
+	msg :=fmt.Sprintf("connecting to edgedb server using: %s, %#v",
+		cloudInstance, opts)
+	log.DefaultLogger.Debug(msg)
 
 	// the client config options accepts a cloud instance as DSN if present
 	client, err := edgedb.CreateClientDSN(ctx, cloudInstance, opts)
@@ -225,9 +226,7 @@ func getOptions(s *backend.DataSourceInstanceSettings) (edgedb.Options, string, 
 	}
 
 	var port int
-	if settings.Port == "" {
-		port = 5656
-	} else {
+	if settings.Port != "" {
 		port, err = strconv.Atoi(settings.Port)
 		if err != nil {
 			return edgedb.Options{}, "", err
