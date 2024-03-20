@@ -43,7 +43,7 @@ func NewEdgeDBDatasource(
 		return nil, err
 	}
 
-	msg :=fmt.Sprintf("connecting to edgedb server using: %s, %#v",
+	msg :=fmt.Sprintf("connecting to edgedb server using: instance=\"%s\", %#v",
 		cloudInstance, opts)
 	log.DefaultLogger.Debug(msg)
 
