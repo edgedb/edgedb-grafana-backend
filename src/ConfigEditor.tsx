@@ -186,7 +186,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             }
             value={secureJsonData.password || ''}
             label="Password"
-            placeholder="Password"
+            placeholder=""
             labelWidth={6}
             inputWidth={20}
             onReset={this.onResetPasssword}
