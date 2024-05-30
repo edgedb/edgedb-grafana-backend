@@ -106,7 +106,7 @@ datasources:
 
 The [edgedb-go](https://github.com/edgedb/edgedb-go) client library
 authenticates [EdgeDB SAAS hosted Cloud](https://www.edgedb.com/cloud)
-differntly than local or self-hosted.  The EdgeDB Cloud instances
+differently than local or self-hosted.  The EdgeDB Cloud instances
 authenticate with a combination of an instance name and a cloud secret
 key.  These are obtained from the EdgeDB Cloud UI when you [create an
 instance](https://cloud.edgedb.com/org/edgedb/create-instance).
